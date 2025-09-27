@@ -1,24 +1,28 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import { Application, Graphics } from 'pixi.js';
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+(async () => {
+  console.log('eggs')
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+  const app = new Application();
+  await app.init({
+    resizeTo: window,
+    backgroundColor: 0x202020,
+    antialias: true,
+  })
+  document.body.appendChild(app.canvas)
+
+  const graphics = new Graphics()
+  graphics
+    .circle(400, 200, 50)
+    .stroke({ width: 2, color: 0xfffff })
+
+  graphics
+    .moveTo(50, 50)
+    .arc(100, 100, 10, 100, Math.PI)
+    .closePath()
+    .fill({ color: 0x00ff00, alpha: 0.5 }); // Fill the shape
+
+
+  app.stage.addChild(graphics)
+})();
+
