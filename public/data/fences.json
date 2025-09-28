@@ -1,6 +1,5 @@
 [
   {
-    "levelid": 1,
     "terra": [
       {
         "start": {
@@ -23351,7 +23350,6 @@
     "race3": []
   },
   {
-    "levelid": 2,
     "terra": [
       {
         "start": {
@@ -46685,7 +46683,6 @@
     "race3": []
   },
   {
-    "levelid": 3,
     "terra": [
       {
         "start": {
@@ -70801,7 +70798,6 @@
     "race3": []
   },
   {
-    "levelid": 4,
     "terra": [
       {
         "start": {
@@ -96872,7 +96868,6 @@
     "race3": []
   },
   {
-    "levelid": 5,
     "terra": [
       {
         "start": {
@@ -120614,7 +120609,6 @@
     "race3": []
   },
   {
-    "levelid": 6,
     "terra": [
       {
         "start": {
@@ -146890,7 +146884,6 @@
     ]
   },
   {
-    "levelid": 7,
     "terra": [
       {
         "start": {
