@@ -2,13 +2,16 @@
   "name": "limo_oob_investigation",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://ele7sbghmm.github.io/limo_oob_investigation/",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
+    "gh-pages": "^6.3.0",
     "typescript": "~5.8.3",
     "vite": "^7.1.7"
   },
