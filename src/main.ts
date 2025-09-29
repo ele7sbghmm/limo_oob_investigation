@@ -4,31 +4,44 @@ import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.j
 type Vec3 = { x: number, y: number, z: number }
 type Fence = { start: Vec3, end: Vec3, normal: Vec3 }
 
-const fenceToCircles = (fences: Fence[], wheelBase: number) => {
-  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+const fencesToCircle = (scene: THREE.Scene, fences: Fence[], wheelBase: number) => {
+  const circleGeometry = new THREE.CircleGeometry(1., 24., 0., Math.PI * 2.)
+  const material = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .1, depthWrite: false, wireframe: false, side: THREE.DoubleSide })
+  const instancedCircles = new THREE.InstancedMesh(circleGeometry, material, fences.length)
+  scene.add(instancedCircles)
 
-  return fences.map(fence => {
+  const matrix = new THREE.Matrix4()
+  const dummy = new THREE.Object3D()
+
+  fences.forEach((fence, i) => {
     const [sx, sz, ex, ez] = [fence.start.x, fence.start.z, fence.end.x, fence.end.z]
     const center = [(sx + ex) / 2., (sz + ez) / 2.]
 
-    const [xdif, zdif] = [Math.abs(center.x - s.x), Math.abs(center.z - s.z)]
+    const [xdif, zdif] = [Math.abs(center[0] - sx), Math.abs(center[1] - sz)]
     const halfLengthSqr = xdif * xdif + zdif * zdif
-    const radius = Math.sqrt(wheelBase * wheelBase + halflengthsqr)
+    const radius = Math.sqrt(wheelBase * wheelBase + halfLengthSqr)
 
-    const geometry = new THREE.CircleGeometry(center, radius)
-    return new THREE.Mesh(geometry, material)
+    dummy.position.set(center[0], 0., center[1])
+    dummy.rotation.x = Math.PI / 2.
+    // dummy.rotation.y = 1.
+    // dummy.rotation.z = 1.
+    dummy.scale.set(radius, radius, radius)
+    dummy.updateMatrix()
+
+    instancedCircles.setMatrixAt(i, dummy.matrix)
   })
+
+  instancedCircles.instanceMatrix.needsUpdate = true
 }
 
 const fencesToMesh = (fences: Fence[]) => {
-  // const points = fences.flatMap(fence => [fence.start.x, 0., fence.start.z, fence.end.x, 0., fence.end.z])
-  const points: number[] = fences.flatMap(fence => [fence.start.x, fence.start.z, 0., fence.end.x, fence.end.z, 0.])
+  const points = fences.flatMap(fence => [fence.start.x, 0., fence.start.z, fence.end.x, 0., fence.end.z])
   const arrayBuf = new Float32Array(points)
 
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute('position', new THREE.BufferAttribute(arrayBuf, 3))
 
-  const material = new THREE.LineBasicMaterial({ color: 0x00ff00 })
+  const material = new THREE.LineBasicMaterial({ color: 0xff0000 })
   return new THREE.LineSegments(geometry, material)
 }
 
@@ -56,9 +69,9 @@ const material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
 const mesh = new THREE.Mesh(geometry, material)
 scene.add(mesh)
 
-const fencesMesh = fencesToMesh(fences[0]['terra'])
-console.log(fencesMesh)
-scene.add(fencesMesh)
+const lineMesh = fencesToMesh(fences[0]['terra'])
+scene.add(lineMesh)
+const circleMesh = fencesToCircle(scene, fences[0].terra, 11.66)
 
 const controls = new FirstPersonControls(camera, renderer.domElement)
 controls.lookSpeed = 1.
