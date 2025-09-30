@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
+import { MapControls } from 'three/addons/controls/MapControls.js';
 
 type Vec3 = { x: number, y: number, z: number }
 type Fence = { start: Vec3, end: Vec3, normal: Vec3 }
@@ -14,7 +14,7 @@ const fencesToCircle = (scene: THREE.Scene, fences: Fence[], wheelBase: number) 
   const dummy = new THREE.Object3D()
 
   fences.forEach((fence, i) => {
-    const [sx, sz, ex, ez] = [fence.start.x, fence.start.z, fence.end.x, fence.end.z]
+    const [sx, sz, ex, ez] = [fence.start.x, -fence.start.z, fence.end.x, -fence.end.z]
     const center = [(sx + ex) / 2., (sz + ez) / 2.]
 
     const [xdif, zdif] = [Math.abs(center[0] - sx), Math.abs(center[1] - sz)]
@@ -35,7 +35,7 @@ const fencesToCircle = (scene: THREE.Scene, fences: Fence[], wheelBase: number) 
 }
 
 const fencesToMesh = (fences: Fence[]) => {
-  const points = fences.flatMap(fence => [fence.start.x, 0., fence.start.z, fence.end.x, 0., fence.end.z])
+  const points = fences.flatMap(fence => [fence.start.x, 0., -fence.start.z, fence.end.x, 0., -fence.end.z])
   const arrayBuf = new Float32Array(points)
 
   const geometry = new THREE.BufferGeometry()
@@ -69,17 +69,23 @@ const material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
 const mesh = new THREE.Mesh(geometry, material)
 scene.add(mesh)
 
-const lineMesh = fencesToMesh(fences[0]['terra'])
+const lineMesh = fencesToMesh(fences[0].terra)
 scene.add(lineMesh)
-const circleMesh = fencesToCircle(scene, fences[0].terra, 11.66)
+fencesToCircle(scene, fences[0].terra, 10.22)
 
-const controls = new FirstPersonControls(camera, renderer.domElement)
-controls.lookSpeed = 1.
-controls.movementSpeed = 50.
+const controls = new MapControls(camera, renderer.domElement)
+controls.enableRotate = false
+
+camera.position.set(
+  controls.target.x,
+  100.,
+  controls.target.z
+
+)
 
 const animate = () => {
   requestAnimationFrame(animate)
-  controls.update(.01)
+  controls.update(.1)
 
   mesh.rotation.z += .01
 
