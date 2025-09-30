@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: '/ele7sbghmm/'
+  base: '/limo_oob_investigation/'
 })
 
