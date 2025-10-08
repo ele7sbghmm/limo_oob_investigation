@@ -1,35 +1,65 @@
-import { Application, Assets, Sprite } from "pixi.js";
+import { Application, Container, Graphics, Rectangle, Text } from 'pixi.js'
 
 (async () => {
-  // Create a new application
-  const app = new Application();
+  const app = new Application
+  await app.init({
+    background: '#111111',
+    resizeTo: window,
+    antialias: true,
+  })
+  document.getElementById('pixi-container')!.appendChild(app.canvas)
 
-  // Initialize the application
-  await app.init({ background: "#1099bb", resizeTo: window });
+  const c = new Container({ })
+  c.eventMode = 'static'
+  await buildFences(c)
 
-  // Append the application canvas to the document body
-  document.getElementById("pixi-container")!.appendChild(app.canvas);
+  c.on('wheel', (event: WheelEvent) => {
+    const factor = event.deltaY > 0 ? 1.01 : .99
+    c.scale.x *= factor
+    c.scale.y *= factor
 
-  // Load the bunny texture
-  const texture = await Assets.load("/assets/bunny.png");
+    console.log(event.deltaY, c.scale, factor)
+  })
 
-  // Create a bunny Sprite
-  const bunny = new Sprite(texture);
+  app.stage.addChild(c)
+})()
 
-  // Center the sprite's anchor point
-  bunny.anchor.set(0.5);
+async function buildFences(c: Container) {
+  const fenceData = await fetch('/data/fences.json').then(data => data.json())
 
-  // Move the sprite to the center of the screen
-  bunny.position.set(app.screen.width / 2, app.screen.height / 2);
+  const g = new Graphics({ })
 
-  // Add the bunny to the stage
-  app.stage.addChild(bunny);
+  let max = [-Infinity, -Infinity]
+  let min = [Infinity, Infinity]
+  fenceData[1].terra.forEach(fence => {
+    const [s, e] = [[fence.start.x, -fence.start.z], [fence.end.x, -fence.end.z]]
+    max = [Math.max(max[0], s[0], e[0]), Math.max(max[1], s[1], e[1])]
+    min = [Math.min(min[0], s[0], e[0]), Math.min(min[1], s[1], e[1])]
+    g
+      .moveTo(...s)
+      .lineTo(...e)
+  })
+  g.stroke({ color: '#ff0000' })
 
-  // Listen for animate update
-  app.ticker.add((time) => {
-    // Just for fun, let's rotate mr rabbit a little.
-    // * Delta is 1 if running at 100% performance *
-    // * Creates frame-independent transformation *
-    bunny.rotation += 0.1 * time.deltaTime;
-  });
-})();
+
+  c.hitArea = new Rectangle(...min, ...max)
+  c.position.set(Math.abs(min[0]), Math.abs(min[1]))
+  c.width = c.x + max[0]
+  c.height = c.z + max[1]
+  console.log(c.x, c.y)
+
+  const centerText = new Text({
+    text: 'center',
+    style: { fill: '#ffffff', fontFamily: 'courier' }
+  })
+  centerText.x = c.width / 3
+  centerText.z = c.height / 2
+  const b = new Graphics({ })
+  b
+    .moveTo(0, 0)
+    .lineTo(200, c.height)
+    .stroke({ color: '#00ff00' })
+
+  c.addChild(centerText, b, g)
+  return c
+}
