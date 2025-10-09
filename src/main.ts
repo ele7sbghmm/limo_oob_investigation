@@ -1,38 +1,37 @@
-import { Application, Container, Graphics, Rectangle, Text } from 'pixi.js'
+import { Application, Bounds, Container, Graphics, Rectangle, Text } from 'pixi.js'
 
 (async () => {
   const app = new Application
   await app.init({
     background: '#111111',
     resizeTo: window,
-    antialias: true,
+    // antialias: true,
   })
   document.getElementById('pixi-container')!.appendChild(app.canvas)
 
-  const c = new Container({ })
-  c.eventMode = 'static'
-  await buildFences(c)
+  const fenceData = await fetch('/data/fences.json').then(data => data.json())
+  const c = buildFences(fenceData)
 
+  c.eventMode = 'static'
   c.on('wheel', (event: WheelEvent) => {
-    const factor = event.deltaY > 0 ? 1.01 : .99
+    const factor = event.deltaY > 0 ? 1.25 : .8
     c.scale.x *= factor
     c.scale.y *= factor
 
-    console.log(event.deltaY, c.scale, factor)
+    console.log(event, event.deltaY, c.scale, factor)
   })
 
   app.stage.addChild(c)
 })()
 
-async function buildFences(c: Container) {
-  const fenceData = await fetch('/data/fences.json').then(data => data.json())
-
+function buildFences(fenceData: any) {
+  const c = new Container({ })
   const g = new Graphics({ })
+  c.addChild(g)
 
-  let max = [-Infinity, -Infinity]
-  let min = [Infinity, Infinity]
+  let [max, min] = [[-Infinity, -Infinity], [Infinity, Infinity]]
   fenceData[1].terra.forEach(fence => {
-    const [s, e] = [[fence.start.x, -fence.start.z], [fence.end.x, -fence.end.z]]
+    const [s, e] = [[fence.start.x * 10, -fence.start.z * 10], [fence.end.x * 10, -fence.end.z * 10]]
     max = [Math.max(max[0], s[0], e[0]), Math.max(max[1], s[1], e[1])]
     min = [Math.min(min[0], s[0], e[0]), Math.min(min[1], s[1], e[1])]
     g
@@ -41,25 +40,14 @@ async function buildFences(c: Container) {
   })
   g.stroke({ color: '#ff0000' })
 
+  c.position.set(window.innerWidth / 2, window.innerHeight / 2)
 
-  c.hitArea = new Rectangle(...min, ...max)
-  c.position.set(Math.abs(min[0]), Math.abs(min[1]))
-  c.width = c.x + max[0]
-  c.height = c.z + max[1]
-  console.log(c.x, c.y)
+  // c.bounds = new Bounds(...min, ...max)
+  c.scale.x *= 1/10
+  c.scale.y *= 1/10
+  c.hitArea = c.getLocalBounds().rectangle
+  console.log(c.bounds)
+  console.log(c.hitArea)
 
-  const centerText = new Text({
-    text: 'center',
-    style: { fill: '#ffffff', fontFamily: 'courier' }
-  })
-  centerText.x = c.width / 3
-  centerText.z = c.height / 2
-  const b = new Graphics({ })
-  b
-    .moveTo(0, 0)
-    .lineTo(200, c.height)
-    .stroke({ color: '#00ff00' })
-
-  c.addChild(centerText, b, g)
   return c
 }
