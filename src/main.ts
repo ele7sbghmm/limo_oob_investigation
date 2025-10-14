@@ -1,22 +1,25 @@
 import * as THREE from 'three'
 import { MapControls } from 'three/addons/controls/MapControls.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import { GUI } from 'lil-gui'
 
 type Vec3 = { x: number, y: number, z: number }
 type Fence = { start: Vec3, end: Vec3, normal: Vec3 }
 
-let dummy = new THREE.Object3D()
+let dummy = new THREE.Object3D
 let instancedCircles: THREE.InstancedMesh
 
-const url = import.meta.env.BASE_URL + './data/fences.json'
+// const url = import.meta.env.BASE_URL + './data/fences.json'
+const url = import.meta.env.BASE_URL + './data/fences_sorted.json'
 const fences = await fetch(url).then(data => data.json())
-const halfLengthSqrs: number[] = Array.from({ length: fences.length }, () => 0.)
+const halfLengthSqrs = Array.from({ length: fences.length }, () => 0.)
 
 const fencesToCircle = (fences: Fence[]) => {
   const circleGeometry = new THREE.CircleGeometry(1., 96., 0., Math.PI * 2.)
-  const material = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .1, depthWrite: false, side: THREE.DoubleSide })
+  const material = new THREE.MeshBasicMaterial(
+    { color: 0xffffff, transparent: true, opacity: .1, depthWrite: false, side: THREE.DoubleSide }
+  )
   instancedCircles = new THREE.InstancedMesh(circleGeometry, material, fences.length)
-  scene.add(instancedCircles)
 
   fences.forEach((fence, i) => {
     const [sx, sz, ex, ez] = [fence.start.x, -fence.start.z, fence.end.x, -fence.end.z]
@@ -77,19 +80,26 @@ const camera = new THREE.PerspectiveCamera(75., window.innerWidth / window.inner
 
 camera.position.z = 5.
 
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight
-  camera.updateProjectionMatrix()
-  renderer.setSize(window.innerWidth, window.innerHeight)
-})
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let hoveredObject = null
+
+window.addEventListener('mousemove', onMouseMove);
+
+function onMouseMove(event) {
+  // Convert to normalized device coordinates (-1 to +1)
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+}
 
 const geometry = new THREE.BoxGeometry(1., 1., 1.)
 const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 })
 const mesh = new THREE.Mesh(geometry, material)
 scene.add(mesh)
 
-fencesToMesh(scene, fences[0].terra)
-instancedCircles = fencesToCircle(fences[0].terra)
+fencesToMesh(scene, fences)
+instancedCircles = fencesToCircle(fences)
 scene.add(instancedCircles)
 
 const controls = new MapControls(camera, renderer.domElement)
@@ -97,7 +107,7 @@ camera.position.set(controls.target.x, 100., controls.target.z)
 controls.enableRotate = false
 
 const guiControls = {
-  wheelBase: 11.66
+  wheelBase: 1.
 }
 
 const gui = new GUI()
@@ -107,6 +117,12 @@ gui
   .step(.01)
   .onChange(updateInstanceScales)
 
+const text = new THREE.Mesh(
+  new TextGeometry('Hello Three.js!'),
+  new THREE.MeshStandardMaterial({ color: 0xffffff })
+)
+scene.add(text)
+
 const animate = () => {
   requestAnimationFrame(animate)
 
@@ -115,8 +131,35 @@ const animate = () => {
 
   controls.update(.1)
 
+  highlightOnHover();
   renderer.render(scene, camera)
 }
 
 animate()
 
+function highlightOnHover() {
+  raycaster.setFromCamera(mouse, camera);
+
+  const intersects = raycaster.intersectObject(instancedCircles);
+
+  if (intersects.length > 0) {
+    const firstObject = intersects[0].object;
+
+    if (hoveredObject !== firstObject) {
+      // Reset previous
+      if (hoveredObject) {
+        hoveredObject.material.emissive.setHex(0x000000);
+      }
+
+      // Highlight new
+      hoveredObject = firstObject;
+      hoveredObject.material.emissive.setHex(0x222222);
+    }
+  } else {
+    // No hover
+    if (hoveredObject) {
+      hoveredObject.material.emissive.setHex(0x000000);
+      hoveredObject = null;
+    }
+  }
+}
