@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    "isModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
     // Environment setup & latest features
     "lib": ["ESNext", "DOM"],
     "target": "ESNext",
