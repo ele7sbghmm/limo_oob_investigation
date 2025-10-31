@@ -11,9 +11,10 @@ function App() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
+        minWidth: "100vw",
         minHeight: "100vh",
-        background: "#111",
-        color: "#000"
+        background: "#100",
+        color: "#111",
       }}>
         <Limo />
       </main>
